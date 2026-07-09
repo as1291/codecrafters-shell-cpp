@@ -20,13 +20,18 @@ int main()
     if(paramIndex!=std::string::npos){
       param=input.substr(paramIndex);
     }
+
     if(command=="exit") break;
-    else if(command=="type "){
+    else if(command=="type"){
       if(param=="echo" || param=="exit" || param=="type") {
         std::cout<<param<< " is a shell builtin" << std::endl;
+      }else
+      {
+        std::cout << param << ": not found" << std::endl;
       }
+      
     }
-    else if(command=="echo ") std::cout<<param << std::endl;
+    else if(command=="echo") std::cout<<param << std::endl;
     else std::cout << input << ": command not found" << std::endl;
   }
 }
