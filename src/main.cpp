@@ -6,8 +6,66 @@
 #include <string>
 #include <unistd.h>
 #include <vector>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 std::vector<std::string> commands = {"exit", "echo", "type"};
+
+std::string findPath(std::string filename)
+{
+  std::string pathvar = std::getenv("PATH");
+  std::istringstream path_stream(pathvar);
+  std::string pathsplit;
+  while (std::getline(path_stream, pathsplit, ':'))
+  {
+    std::string filepath = pathsplit + '/' + filename;
+    if (access(filepath.c_str(), X_OK) == 0)
+    {
+      return filepath;
+    }
+  }
+  return "";
+}
+
+bool callPath(std::string param)
+{
+  std::vector<std::string> tokens;
+  std::istringstream input(param);
+  std::string word;
+  while (input >> word)
+  {
+    tokens.push_back(word);
+  }
+  if (tokens.empty())
+    return false;
+  std::string filepath = findPath(tokens[0]);
+  if (filepath.empty())
+  {
+    return false;
+  }
+
+  std::vector<char *> args;
+  for (auto &token : tokens)
+  {
+    args.push_back(const_cast<char *>(token.c_str()));
+  }
+  args.push_back(nullptr);
+  pid_t pid = fork();
+  if (pid < 0)
+  {
+    perror("fork");
+    return false;
+  }
+  if (pid == 0)
+  {
+    execv(filepath.c_str(), args.data());
+    perror("execv");
+    exit(1);
+  }
+  else
+    waitpid(pid, nullptr, 0);
+  return true;
+}
 
 void callType(std::string param)
 {
@@ -58,7 +116,12 @@ int REP()
   else if (command == "type")
     callType(param);
   else
-    std::cout << input << ": command not found" << std::endl;
+  {
+    if (!callPath(input))
+    {
+      std::cout << command << ": command not found" << std::endl;
+    }
+  }
   return 0;
 }
 
