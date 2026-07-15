@@ -115,7 +115,7 @@ void callCd(std::string path)
   // if(path.empty())
   // std::cout<<"empty file name"
   if(chdir(path.c_str())!=0){
-    std::cout << "cd: " << argument << ": No such file or directory" << std::endl;
+    std::cout << "cd: " << param << ": No such file or directory" << std::endl;
   }
 }
 
