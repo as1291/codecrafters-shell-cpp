@@ -8,8 +8,10 @@
 #include <vector>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <windows.h>
+#include <filesystem>
 
-std::vector<std::string> commands = {"exit", "echo", "type"};
+std::vector<std::string> commands = {"exit", "echo", "type", "pwd"};
 
 std::string findPath(std::string filename)
 {
@@ -74,25 +76,35 @@ void callType(std::string param)
     std::cout << param << " is a shell builtin" << std::endl;
   else
   {
-    std::string pathvar = std::getenv("PATH");
-    std::istringstream path_stream(pathvar);
-    std::string pathsplit;
-    while (std::getline(path_stream, pathsplit, ':'))
-    {
-      std::string filepath = pathsplit + '/' + param;
-      if (access(filepath.c_str(), X_OK) == 0)
-      {
-        std::cout << param << " is " << filepath << std::endl;
+    // std::string pathvar = std::getenv("PATH");
+    // std::istringstream path_stream(pathvar);
+    // std::string pathsplit;
+    // while (std::getline(path_stream, pathsplit, ':'))
+    // {
+    //   std::string filepath = pathsplit + '/' + param;
+    //   if (access(filepath.c_str(), X_OK) == 0)
+    //   {
+    //     std::cout << param << " is " << filepath << std::endl;
+    //     return;
+    //   }
+    // }
+    std::string filepath = findPath(param);
+    if(!filepath.empty()){
+       std::cout << param << " is " << filepath << std::endl;
         return;
-      }
-    }
+    }else
     std::cout << param << ": not found" << std::endl;
+    return;
   }
 }
 
 void callEcho(std::string param)
 {
   std::cout << param << std::endl;
+}
+
+void callPwd(){
+  std::cout<< std::filesystem::current_path().string() << endl;
 }
 
 int REP()
@@ -115,6 +127,9 @@ int REP()
     callEcho(param);
   else if (command == "type")
     callType(param);
+  else if(command=="pwd"){
+    callPwd();
+  }
   else
   {
     if (!callPath(input))
