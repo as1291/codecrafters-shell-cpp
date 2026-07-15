@@ -104,7 +104,7 @@ void callEcho(std::string param)
 }
 
 void callPwd(){
-  std::cout<< std::filesystem::current_path().string() << endl;
+  std::cout<< std::filesystem::current_path().string() << std::endl;
 }
 
 int REP()
