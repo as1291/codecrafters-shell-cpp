@@ -8,7 +8,7 @@
 #include <vector>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <windows.h>
+// #include <windows.h>
 #include <filesystem>
 
 std::vector<std::string> commands = {"exit", "echo", "type", "pwd"};
