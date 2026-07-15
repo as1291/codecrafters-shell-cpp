@@ -89,11 +89,13 @@ void callType(std::string param)
     //   }
     // }
     std::string filepath = findPath(param);
-    if(!filepath.empty()){
-       std::cout << param << " is " << filepath << std::endl;
-        return;
-    }else
-    std::cout << param << ": not found" << std::endl;
+    if (!filepath.empty())
+    {
+      std::cout << param << " is " << filepath << std::endl;
+      return;
+    }
+    else
+      std::cout << param << ": not found" << std::endl;
     return;
   }
 }
@@ -103,8 +105,18 @@ void callEcho(std::string param)
   std::cout << param << std::endl;
 }
 
-void callPwd(){
-  std::cout<< std::filesystem::current_path().string() << std::endl;
+void callPwd()
+{
+  std::cout << std::filesystem::current_path().string() << std::endl;
+}
+
+void callCd(std::string path)
+{
+  // if(path.empty())
+  // std::cout<<"empty file name"
+  if(chdir(path.c_str())!=0){
+    std::cout << "cd: " << argument << ": No such file or directory" << std::endl;
+  }
 }
 
 int REP()
@@ -127,9 +139,10 @@ int REP()
     callEcho(param);
   else if (command == "type")
     callType(param);
-  else if(command=="pwd"){
+  else if (command == "pwd")
     callPwd();
-  }
+  else if (command == "cd")
+    callCd(param);
   else
   {
     if (!callPath(input))
