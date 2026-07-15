@@ -112,8 +112,10 @@ void callPwd()
 
 void callCd(std::string path)
 {
-  // if(path.empty())
-  // std::cout<<"empty file name"
+  if(path=="~"){
+    char *homeDir = std::getenv("HOME");
+    path = homeDir;
+  }
   if(chdir(path.c_str())!=0){
     std::cout << "cd: " << path << ": No such file or directory" << std::endl;
   }
