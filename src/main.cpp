@@ -8,10 +8,9 @@
 #include <vector>
 #include <sys/types.h>
 #include <sys/wait.h>
-// #include <windows.h>
 #include <filesystem>
 
-std::vector<std::string> commands = {"exit", "echo", "type", "pwd"};
+std::vector<std::string> commands = {"exit", "echo", "type"};
 
 std::string findPath(std::string filename)
 {
@@ -76,18 +75,6 @@ void callType(std::string param)
     std::cout << param << " is a shell builtin" << std::endl;
   else
   {
-    // std::string pathvar = std::getenv("PATH");
-    // std::istringstream path_stream(pathvar);
-    // std::string pathsplit;
-    // while (std::getline(path_stream, pathsplit, ':'))
-    // {
-    //   std::string filepath = pathsplit + '/' + param;
-    //   if (access(filepath.c_str(), X_OK) == 0)
-    //   {
-    //     std::cout << param << " is " << filepath << std::endl;
-    //     return;
-    //   }
-    // }
     std::string filepath = findPath(param);
     if (!filepath.empty())
     {
@@ -138,19 +125,21 @@ void callEcho(std::string param)
   return;
 }
 
-
 void callPwd()
 {
   std::cout << std::filesystem::current_path().string() << std::endl;
+  return;
 }
 
 void callCd(std::string path)
 {
-  if(path=="~"){
+  if (path == "~")
+  {
     char *homeDir = std::getenv("HOME");
     path = homeDir;
   }
-  if(chdir(path.c_str())!=0){
+  if (chdir(path.c_str()) != 0)
+  {
     std::cout << "cd: " << path << ": No such file or directory" << std::endl;
   }
 }
