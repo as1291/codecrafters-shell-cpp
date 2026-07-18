@@ -102,8 +102,42 @@ void callType(std::string param)
 
 void callEcho(std::string param)
 {
-  std::cout << param << std::endl;
+  std::vector<std::string> tokens;
+  bool isSingleQuote = false;
+  std::string current;
+  for (auto &s : param)
+  {
+    if (s == '\'')
+      isSingleQuote=!isSingleQuote;
+    else if (s == ' ' && !isSingleQuote)
+    {
+      if (!current.empty())
+      {
+        tokens.push_back(current);
+        current.clear();
+      }
+    }
+    else
+    {
+      current += s;
+    }
+  }
+
+  if (!current.empty())
+  {
+    tokens.push_back(current);
+  }
+  for (size_t i = 0; i < tokens.size(); i++)
+  {
+    std::cout << tokens[i];
+
+    if (i + 1 != tokens.size())
+      std::cout << " ";
+  }
+  std::cout << std::endl;
+  return;
 }
+
 
 void callPwd()
 {
