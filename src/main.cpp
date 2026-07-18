@@ -10,7 +10,37 @@
 #include <sys/wait.h>
 #include <filesystem>
 
-std::vector<std::string> commands = {"exit", "echo", "type"};
+std::vector<std::string> allCommands = {"exit", "echo", "type", "pwd"};
+
+std::vector<std::string> tokenize(const std::string &input)
+{
+  std::vector<std::string> tokens;
+  bool isSingleQuote = false;
+  std::string current = "";
+  for (auto &s : input)
+  {
+    if (s == '\'')
+      isSingleQuote = !isSingleQuote;
+    else if (s == ' ' && !isSingleQuote)
+    {
+      if (!current.empty())
+      {
+        tokens.push_back(current);
+        current.clear();
+      }
+    }
+    else
+    {
+      current += s;
+    }
+  }
+
+  if (!current.empty())
+  {
+    tokens.push_back(current);
+  }
+  return tokens;
+}
 
 std::string findPath(std::string filename)
 {
@@ -28,15 +58,8 @@ std::string findPath(std::string filename)
   return "";
 }
 
-bool callPath(std::string param)
+bool callPath(std::vector<std::string> &tokens)
 {
-  std::vector<std::string> tokens;
-  std::istringstream input(param);
-  std::string word;
-  while (input >> word)
-  {
-    tokens.push_back(word);
-  }
   if (tokens.empty())
     return false;
   std::string filepath = findPath(tokens[0]);
@@ -63,58 +86,20 @@ bool callPath(std::string param)
     perror("execv");
     exit(1);
   }
-  else
-    waitpid(pid, nullptr, 0);
+
+  waitpid(pid, nullptr, 0);
   return true;
 }
 
-void callType(std::string param)
+void callPwd()
 {
-  auto it = std::find(std::begin(commands), std::end(commands), param);
-  if (it != std::end(commands))
-    std::cout << param << " is a shell builtin" << std::endl;
-  else
-  {
-    std::string filepath = findPath(param);
-    if (!filepath.empty())
-    {
-      std::cout << param << " is " << filepath << std::endl;
-      return;
-    }
-    else
-      std::cout << param << ": not found" << std::endl;
-    return;
-  }
+  std::cout << std::filesystem::current_path().string() << std::endl;
+  return;
 }
 
-void callEcho(std::string param)
+void callEcho(const std::vector<std::string> &tokens)
 {
-  std::vector<std::string> tokens;
-  bool isSingleQuote = false;
-  std::string current;
-  for (auto &s : param)
-  {
-    if (s == '\'')
-      isSingleQuote=!isSingleQuote;
-    else if (s == ' ' && !isSingleQuote)
-    {
-      if (!current.empty())
-      {
-        tokens.push_back(current);
-        current.clear();
-      }
-    }
-    else
-    {
-      current += s;
-    }
-  }
-
-  if (!current.empty())
-  {
-    tokens.push_back(current);
-  }
-  for (size_t i = 0; i < tokens.size(); i++)
+  for (size_t i = 1; i < tokens.size(); i++)
   {
     std::cout << tokens[i];
 
@@ -125,22 +110,45 @@ void callEcho(std::string param)
   return;
 }
 
-void callPwd()
+void callCd(const std::vector<std::string> &tokens)
 {
-  std::cout << std::filesystem::current_path().string() << std::endl;
-  return;
-}
-
-void callCd(std::string path)
-{
+  if (tokens.size() != 2)
+    return;
+  std::string path = tokens[1];
   if (path == "~")
   {
     char *homeDir = std::getenv("HOME");
-    path = homeDir;
+
+    if (homeDir != nullptr)
+      path = homeDir;
   }
   if (chdir(path.c_str()) != 0)
   {
     std::cout << "cd: " << path << ": No such file or directory" << std::endl;
+  }
+  return;
+}
+
+void callType(const std::vector<std::string> &tokens)
+{
+  if (tokens.size() < 2)
+    return;
+  for (size_t i = 1; i < tokens.size(); i++)
+  {
+    std::string param = tokens[i];
+    auto it = std::find(std::begin(allCommands), std::end(allCommands), param);
+    if (it != std::end(allCommands))
+      std::cout << param << " is a shell builtin" << std::endl;
+    else
+    {
+      std::string filepath = findPath(param);
+      if (!filepath.empty())
+      {
+        std::cout << param << " is " << filepath << std::endl;
+      }
+      else
+        std::cout << param << ": not found" << std::endl;
+    }
   }
 }
 
@@ -149,28 +157,25 @@ int REP()
   std::cout << "$ ";
   std::string input;
   std::getline(std::cin, input);
-  if (input == "exit")
-    return -1;
+  std::vector<std::string> tokens = tokenize(input);
+  if (tokens.empty())
+    return 0;
 
-  std::string command = input.substr(0, input.find(' '));
-  std::size_t paramIndex = input.find(' ');
-  std::string param;
-  if (paramIndex != std::string::npos)
-    param = input.substr(paramIndex + 1);
+  std::string command = tokens[0];
 
   if (command == "exit")
     return -1;
   else if (command == "echo")
-    callEcho(param);
+    callEcho(tokens);
   else if (command == "type")
-    callType(param);
+    callType(tokens);
   else if (command == "pwd")
     callPwd();
   else if (command == "cd")
-    callCd(param);
+    callCd(tokens);
   else
   {
-    if (!callPath(input))
+    if (!callPath(tokens))
     {
       std::cout << command << ": command not found" << std::endl;
     }
